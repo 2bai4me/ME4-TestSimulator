@@ -77,21 +77,64 @@ def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ
         driver.sleep(5)
         log("Video added — transcript fetched")
         
-        # Step 5: "Analyse starten" — then WAIT for completion
-        click("btn-analyse-start")
-        log("Analysis started — waiting for completion...")
+        # Step 5: "Analyse starten" — use evaluate for reliable event triggering
+        driver.page.locator("[data-testid='btn-analyse-start']").first.evaluate("el => el.click()")
+        log("Analysis started — waiting for overlay...")
         
-        # Wait for the AI overlay / loading to disappear (up to 90s)
-        ai_done = wait_for_hidden("#ai-overlay", timeout=90000)
-        if ai_done:
-            log("AI overlay dismissed")
-        else:
-            # Fallback: wait for result tiles to appear
-            log("Waiting for result tiles...")
+        # Wait for the analysis overlay + completion
+        try:
+            driver.page.locator("#apop").first.wait_for(state="visible", timeout=15000)
+            log("Analysis running...")
+            
+            # Wait for the summary line that signals completion (📋 N Themen gespeichert)
+            driver.page.locator("#apop:has-text('Themen gespeichert')").first.wait_for(state="attached", timeout=180000)
+            driver.sleep(1)
+            log("Analysis blocks complete")
+            
+            # Wait for consolidation if running
+            try:
+                driver.page.locator("#apop:has-text('Konsolidiere')").first.wait_for(state="attached", timeout=30000)
+                driver.page.locator("#apop:has-text('Duplikat')").first.wait_for(state="attached", timeout=30000)
+                log("Consolidation complete")
+            except:
+                log("Consolidation done or skipped")
+            
+            driver.sleep(1)
+            # Click OK to close overlay and render results
+            driver.page.locator("#aclose").first.evaluate("el => el.click()")
+            driver.sleep(2)
+            log("Analysis complete — overlay closed")
+        except Exception as oe:
+            log(f"Analysis issue: {oe}")
         
-        # Wait for results in Accordion 3
-        tiles_sel = "#thema-ergebnisse-container .topic-card, #thema-ergebnisse-container [class*='result'], #thema-ergebnisse-container [class*='ergebnis']"
-        tiles_visible = wait_for_visible(tiles_sel, timeout=60000)
+        # Now results should be rendered
+        driver.sleep(1)
+        
+        # Wait for results in Accordion 3 — open it first
+        driver.sleep(0.5)
+        panel3 = driver.page.locator('.service-panel').nth(2)
+        if not panel3.evaluate("el => el.classList.contains('open')"):
+            panel3.locator('.service-panel-header').evaluate("el => el.click()")
+            driver.sleep(0.5)
+            log("Opened results accordion")
+        
+        tiles_sel = ".topic-card"
+        tiles_visible = wait_for_visible(tiles_sel, timeout=45000)
+        
+        if not tiles_visible:
+            # Debug: dump what's in the container
+            try:
+                html = driver.page.locator("#thema-ergebnisse-container").inner_html()
+                log(f"DEBUG container HTML ({len(html)} chars): {html[:300]}")
+            except Exception as de:
+                log(f"DEBUG container error: {de}")
+            log("Trying fallback selectors...")
+            for sel in ["#thema-ergebnisse-container .topic-card", "#thema-ergebnisse-container > div:not(.text-muted)", "#thema-ergebnisse-container [data-id]"]:
+                tiles_visible = wait_for_visible(sel, timeout=10000)
+                if tiles_visible:
+                    tiles_sel = sel
+                    log(f"Found tiles via: {sel}")
+                    break
         
         if tiles_visible:
             driver.sleep(1)
