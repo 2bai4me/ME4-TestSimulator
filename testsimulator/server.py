@@ -122,37 +122,18 @@ def delete_workflow(name: str):
 # ─── Autorun (SMproducer) ────────────────────────────────────────
 @app.post("/autorun/smproducer")
 def autorun_smproducer(req: AutorunRequest):
-    """Run SMproducer YouTube → Topic → Decision Point workflow."""
-    from .webdriver import WebDriver
-    
-    driver = WebDriver(headless=req.headless)
+    """Run complete SMproducer test workflow."""
+    from .autorun import run_smproducer_test
     
     def _run():
-        try:
-            driver.start(req.url)
-            driver.sleep(1)
-            # Select channel
-            driver.click_text(req.channel, timeout=5)
-            driver.sleep(0.5)
-            # New project
-            driver.click_text("+ Neues Projekt", timeout=5)
-            driver.sleep(0.5)
-            # YouTube tab
-            driver.click_text("YouTube (URL)", timeout=5)
-            driver.sleep(0.3)
-            driver.type_into("https://www.youtube.com/watch?v=", req.youtube, timeout=5)
-            driver.sleep(0.3)
-            driver.click_text("Hinzufügen", timeout=5)
-            driver.sleep(3)
-            # Send to AI
-            driver.click_text("An KI senden", timeout=5)
-            driver.sleep(3)
-            print("[Autorun] Workflow pausiert bei Entscheidungspunkt")
-        except Exception as e:
-            print(f"[Autorun] Error: {e}")
+        result = run_smproducer_test(
+            youtube_url=req.youtube,
+            headless=req.headless
+        )
+        print(f"[Autorun] Result: {result}")
     
     threading.Thread(target=_run, daemon=True).start()
-    return {"status": "running", "message": "SMproducer workflow gestartet"}
+    return {"status": "running", "message": "SMproducer Test-Workflow gestartet"}
 
 
 # ─── Main ────────────────────────────────────────────────────────
