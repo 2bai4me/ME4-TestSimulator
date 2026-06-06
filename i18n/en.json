@@ -1,0 +1,41 @@
+{
+  "app.name": "ME4 TestSimulator",
+  "app.tagline": "Macro-based UI Test Simulator",
+  "app.version": "Version {version}",
+
+  "cli.record.help": "Record a new macro",
+  "cli.replay.help": "Replay a saved macro",
+  "cli.autorun.help": "Run SMproducer workflow automatically",
+  "cli.option.lang": "Language (de|en)",
+  "cli.option.headless": "Run browser without UI",
+  "cli.option.file": "Macro JSON file",
+  "cli.option.youtube": "YouTube URL",
+  "cli.option.channel": "Channel prefix",
+
+  "webdriver.launching": "Launching {browser} (headless={headless})...",
+  "webdriver.launched": "Browser launched: {browser}",
+  "webdriver.closed": "Browser closed.",
+
+  "schema.valid": "Valid: {name} ({steps} steps)",
+  "schema.invalid": "Invalid: {error}",
+  "schema.loading": "Loading macro: {path}",
+  "schema.schema_info": "Schema defines {count} action types",
+
+  "player.running": "Running macro: {name}",
+  "player.step": "Step {id}/{total}: {action} — {description}",
+  "player.done": "Macro completed.",
+  "player.error": "Error at step {id}: {error}",
+
+  "recorder.started": "Recording started.",
+  "recorder.step_recorded": "Step {id} recorded: {action}",
+  "recorder.saved": "Macro saved: {path}",
+
+  "autorun.started": "SMproducer workflow started.",
+  "autorun.paused": "Paused at decision point.",
+  "autorun.resumed": "Resumed after decision.",
+
+  "error.browser_not_launched": "Browser not launched. Call launch_browser() first.",
+  "error.file_not_found": "File not found: {path}",
+  "error.invalid_macro": "Invalid macro format: {error}",
+  "error.step_failed": "Step failed: {error}"
+}

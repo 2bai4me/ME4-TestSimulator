@@ -1,0 +1,41 @@
+{
+  "app.name": "ME4 TestSimulator",
+  "app.tagline": "Macro-basierter UI-Test-Simulator",
+  "app.version": "Version {version}",
+
+  "cli.record.help": "Neues Makro aufzeichnen",
+  "cli.replay.help": "Gespeichertes Makro abspielen",
+  "cli.autorun.help": "SMproducer-Workflow automatisch ausführen",
+  "cli.option.lang": "Sprache (de|en)",
+  "cli.option.headless": "Browser ohne UI ausführen",
+  "cli.option.file": "Makro-JSON-Datei",
+  "cli.option.youtube": "YouTube-URL",
+  "cli.option.channel": "Kanal-Präfix",
+
+  "webdriver.launching": "Starte {browser} (headless={headless})...",
+  "webdriver.launched": "Browser gestartet: {browser}",
+  "webdriver.closed": "Browser geschlossen.",
+
+  "schema.valid": "Gültig: {name} ({steps} Schritte)",
+  "schema.invalid": "Ungültig: {error}",
+  "schema.loading": "Lade Makro: {path}",
+  "schema.schema_info": "Schema definiert {count} Aktionstypen",
+
+  "player.running": "Führe Makro aus: {name}",
+  "player.step": "Schritt {id}/{total}: {action} — {description}",
+  "player.done": "Makro abgeschlossen.",
+  "player.error": "Fehler bei Schritt {id}: {error}",
+
+  "recorder.started": "Aufzeichnung gestartet.",
+  "recorder.step_recorded": "Schritt {id} aufgezeichnet: {action}",
+  "recorder.saved": "Makro gespeichert: {path}",
+
+  "autorun.started": "SMproducer-Workflow gestartet.",
+  "autorun.paused": "Angehalten bei Entscheidungspunkt.",
+  "autorun.resumed": "Fortgesetzt nach Entscheidung.",
+
+  "error.browser_not_launched": "Browser wurde nicht gestartet. Rufe launch_browser() auf.",
+  "error.file_not_found": "Datei nicht gefunden: {path}",
+  "error.invalid_macro": "Ungültiges Makro-Format: {error}",
+  "error.step_failed": "Schritt fehlgeschlagen: {error}"
+}

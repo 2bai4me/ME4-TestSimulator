@@ -1,3 +1,17 @@
-playwright>=1.40.0
-pyautogui>=0.9.54
-pynput>=1.7.6
+# ME4 TestSimulator — Core Dependencies
+# Phase 1: Core Framework
+
+# Web Automation
+playwright>=1.45.0
+
+# CLI Framework
+click>=8.1.0
+
+# Schema Validation
+jsonschema>=4.20.0
+
+# Development
+pytest>=8.0
+pytest-playwright>=0.5
+ruff>=0.4
+mypy>=1.8
