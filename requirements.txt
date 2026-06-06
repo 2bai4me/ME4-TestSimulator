@@ -1,3 +1,5 @@
-playwright>=1.40.0
+fastapi>=0.104.0
+uvicorn>=0.24.0
 pyautogui>=0.9.54
 pynput>=1.7.6
+playwright>=1.40.0
