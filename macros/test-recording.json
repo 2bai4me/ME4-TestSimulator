@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "name": "login-flow-test",
+    "created": "2026-06-06T18:55:13.177185+00:00",
+    "browser": "chromium",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "steps": [
+    {
+      "id": 1,
+      "action": "navigate",
+      "url": "data:text/html,<html><body><button data-testid=\"login-btn\" id=\"b1\">Login</button><input id=\"username\" type=\"text\" placeholder=\"user\"></body></html>",
+      "description": "Navigate to data:text/html,<html><body><button data-testid=\"login-btn\" id=\"b1\">Login</button><input id=\"username\" type=\"text\" placeholder=\"user\"></body></html>"
+    },
+    {
+      "id": 2,
+      "action": "click",
+      "selector": "[data-testid=\"login-btn\"]",
+      "description": "Click [data-testid=\"login-btn\"]"
+    },
+    {
+      "id": 3,
+      "action": "type",
+      "selector": "#username",
+      "value": "admin",
+      "description": "Type 'admin' into #username"
+    }
+  ]
+}
