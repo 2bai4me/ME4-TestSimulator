@@ -28,10 +28,19 @@ def main() -> None:
     record.add_argument("--timeout", "-t", type=float, default=None,
                         help="Max recording time in seconds (default: no limit)")
 
-    # ---- replay command ---------------------------------------------------
+    # ---- play command -----------------------------------------------------
 
-    replay = sub.add_parser("replay", help="Replay a saved macro")
-    replay.add_argument("file", help="Macro JSON file to replay")
+    play = sub.add_parser("play", help="Replay a recorded macro")
+    play.add_argument("file", help="Macro JSON file to replay")
+    play.add_argument("--headless", action="store_true", default=True,
+                      help="Run browser headless (default: True)")
+    play.add_argument("--no-headless", action="store_true",
+                      help="Show browser UI (overrides --headless)")
+    play.add_argument("--browser", "-b", default="chromium",
+                      choices=["chromium", "firefox", "webkit"],
+                      help="Browser engine (default: chromium)")
+    play.add_argument("--screenshots", "-s", action="store_true",
+                      help="Take a screenshot after every step")
 
     # ---- autorun command --------------------------------------------------
 
@@ -63,12 +72,33 @@ def main() -> None:
         print(f"[TestSimulator] Recording saved to {saved}")
         print(f"[TestSimulator] {len(session._steps)} steps recorded")
 
-    elif args.command == "replay":
+    elif args.command == "play":
+        from .player import MacroPlayer
         from .schema import load_macro
-        print(f"[TestSimulator] Loading macro: {args.file}")
+
+        headless = not getattr(args, "no_headless", False)
+
+        print(f"[TestSimulator] Playing macro: {args.file}")
         macro = load_macro(args.file)
         print(f"[TestSimulator] Macro '{macro['metadata']['name']}' "
-              f"({len(macro['steps'])} steps) — replay coming in Phase 3.")
+              f"({len(macro['steps'])} steps)")
+
+        player = MacroPlayer(
+            headless=headless,
+            browser=args.browser,
+            screenshots=args.screenshots,
+        )
+        result = player.play(macro)
+
+        if result.success:
+            print(f"[TestSimulator] All {result.steps_executed} steps passed.")
+        else:
+            print(f"[TestSimulator] {result.error_count} error(s) "
+                  f"in {result.steps_executed} steps:")
+            for err in result.errors:
+                print(f"  - Step {err.step_id} ({err.action}): {err.message}")
+                if err.screenshot:
+                    print(f"    Screenshot: {err.screenshot}")
 
     elif args.command == "autorun":
         from .autorun import run_youtube_workflow

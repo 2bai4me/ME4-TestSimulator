@@ -29,3 +29,6 @@ htmlcov/
 # Playwright
 playwright-report/
 test-results/
+
+# TestSimulator screenshots
+screenshots/
