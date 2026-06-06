@@ -61,6 +61,8 @@ def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ
             panel2.locator('.service-panel-header').evaluate("el => el.click()")
             driver.sleep(0.5)
             log("Opened source text accordion")
+        else:
+            log("Source text accordion open")
         
         # Step 3: YouTube tab + URL
         yt_check = driver.page.locator("#source-check-youtube")
@@ -76,7 +78,7 @@ def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ
         log("Video added — transcript fetched")
         
         # Step 5: "Analyse starten" — then WAIT for completion
-        driver.page.locator("button:has-text('Analyse starten')").first.evaluate("el => el.click()")
+        click("btn-analyse-start")
         log("Analysis started — waiting for completion...")
         
         # Wait for the AI overlay / loading to disappear (up to 90s)
