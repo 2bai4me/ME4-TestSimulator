@@ -87,10 +87,12 @@ def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=RdqYvdT74i0
             driver.sleep(0.5)
         
         click("btn-beschreibung-erstellen", timeout=15000)
+        driver.sleep(5)  # wait for async saveMeta
         driver.sleep(3)
         log("Description created")
         
         click("btn-service-abschliessen", timeout=10000)
+        driver.sleep(3)  # wait for async save
         driver.sleep(2)
         log("Topic complete ✓")
         
@@ -152,7 +154,7 @@ def run_full_test(youtube_url="https://www.youtube.com/watch?v=RdqYvdT74i0", hea
         driver.page.locator("#apop").first.wait_for(state="visible", timeout=15000)
         driver.page.locator("#apop:has-text('Themen gespeichert')").first.wait_for(state="attached", timeout=180000)
         try:
-            driver.page.locator("#apop:has-text('Duplikat')").first.wait_for(state="attached", timeout=60000)
+            driver.page.locator("#apop:has-text('Duplikat')").first.wait_for(state="attached", timeout=300000)
         except: pass
         driver.page.locator("#aclose").first.evaluate("el => el.click()")
         driver.sleep(2)
@@ -171,8 +173,10 @@ def run_full_test(youtube_url="https://www.youtube.com/watch?v=RdqYvdT74i0", hea
         if not panel4.evaluate("el => el.classList.contains('open')"):
             panel4.locator('.service-panel-header').evaluate("el => el.click()")
         click("btn-beschreibung-erstellen", timeout=15000)
+        driver.sleep(5)  # wait for async saveMeta
         driver.sleep(3)
         click("btn-service-abschliessen", timeout=10000)
+        driver.sleep(3)  # wait for async save
         driver.sleep(2)
         log("[1] Topic complete ✓")
         
@@ -395,7 +399,7 @@ def run_research_test(headless=False):
             driver.page.locator("#dr-popup-log").first.wait_for(state="visible", timeout=10000)
             log("[\u2192] Overlay visible")
             try:
-                driver.page.locator("#dr-popup-log:has-text('abgeschlossen')").first.wait_for(state="attached", timeout=60000)
+                driver.page.locator("#dr-popup-log:has-text('abgeschlossen')").first.wait_for(state="attached", timeout=300000)
                 log("[\u2713] DeepResearch completed")
             except:
                 try:
