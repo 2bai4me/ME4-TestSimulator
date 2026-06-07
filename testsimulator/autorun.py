@@ -251,3 +251,117 @@ def run_full_test(youtube_url="https://www.youtube.com/watch?v=RdqYvdT74i0", hea
         try: driver.stop()
         except: pass
         return {"status": "error", "error": str(e), "steps": steps}
+
+
+def run_research_test(headless=False):
+    """Research-only test — uses existing project with Step 1 completed."""
+    driver = WebDriver(headless=headless)
+    steps = []
+    
+    def log(msg):
+        print(f"[Research] {msg}")
+        steps.append(msg)
+    
+    def click(testid, timeout=10000):
+        sel = f"[data-testid='{testid}']"
+        el = driver.page.locator(sel).first
+        el.wait_for(state="visible", timeout=timeout)
+        el.click(force=True)
+    
+    def fill(testid, text, timeout=10000):
+        sel = f"[data-testid='{testid}']"
+        el = driver.page.locator(sel).first
+        el.wait_for(state="visible", timeout=timeout)
+        el.fill(text)
+    
+    try:
+        driver.start("http://localhost:5173")
+        driver.sleep(3)
+        log("Page loaded")
+        
+        driver.page.locator("#thema-channel-select").select_option("LUYB")
+        driver.sleep(1)
+        project_select = driver.page.locator("#existing-project-select")
+        last_val = project_select.locator("option").last.get_attribute("value")
+        project_select.select_option(value=last_val)
+        log(f"Project: {last_val}")
+        driver.sleep(2)
+        
+        driver.page.locator("[data-nav='2']").first.click(force=True)
+        driver.sleep(4)
+        log("Research page loaded")
+        
+        passed = 0
+        total = 6
+        
+        try:
+            t = driver.page.locator("[data-testid='research-nb-title']").input_value(timeout=10000)
+            log("[✓] Title present" if t else "[✗] Title EMPTY")
+            if t: passed += 1
+        except Exception as e:
+            log(f"[✗] Title error: {e}")
+            ws = driver.page.locator("#workspace").inner_html(timeout=3000)[:300]
+            log(f"Workspace: {ws}")
+            driver.stop()
+            return {"status": "error", "error": f"Research not loaded", "steps": steps}
+        
+        try:
+            d = driver.page.locator("[data-testid='research-nb-desc']").input_value(timeout=5000)
+            log(f"[✓] Description {len(d)} chars" if d else "[✗] Description EMPTY")
+            if d: passed += 1
+        except:
+            log("[✗] Description error")
+        
+        try:
+            click("btn-copy-title", timeout=5000)
+            log("[✓] Copy title")
+            passed += 1
+        except Exception as e:
+            log(f"[✗] Copy title: {e}")
+        
+        try:
+            click("btn-copy-desc", timeout=5000)
+            log("[✓] Copy desc")
+            passed += 1
+        except:
+            log("[✗] Copy desc")
+        
+        try:
+            fill("research-notebook-content", "TestSimulator Research note.")
+            click("btn-save-notizen", timeout=5000)
+            log("[✓] Notes saved")
+            passed += 1
+        except Exception as e:
+            log(f"[✗] Notes: {e}")
+        
+        try:
+            p2 = driver.page.locator("#research-accordion .service-panel").nth(1)
+            if not p2.evaluate("el => el.classList.contains('open')"):
+                p2.locator(".service-panel-header").evaluate("el => el.click()")
+                driver.sleep(0.5)
+            fill("research-extra-text", "TestSimulator criteria test.")
+            click("btn-select-kriterien", timeout=10000)
+            driver.sleep(3)
+            driver.page.locator("#generated-prompt pre").first.wait_for(state="visible", timeout=30000)
+            log("[✓] Prompt generated")
+            passed += 1
+        except Exception as e:
+            log(f"[✗] Prompt: {e}")
+        
+        try:
+            click("btn-copy-prompt", timeout=5000)
+            log("[✓] Copy prompt")
+        except:
+            log("[✗] Copy prompt")
+        
+        log(f"=== RESEARCH: {passed}/{total} passed ===")
+        driver.stop()
+        return {"status": "done" if passed >= total else "partial", "passed": passed, "total": total, "steps": steps}
+        
+    except Exception as e:
+        log(f"FATAL: {e}")
+        try: driver.page.screenshot(path="workflows/last_error.png")
+        except: pass
+        try: driver.stop()
+        except: pass
+        return {"status": "error", "error": str(e), "steps": steps}
