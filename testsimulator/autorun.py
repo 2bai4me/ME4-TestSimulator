@@ -287,9 +287,31 @@ def run_research_test(headless=False):
         log(f"Project: {last_val}")
         driver.sleep(2)
         
-        driver.page.locator("[data-nav='2']").first.click(force=True)
+        # Navigate to Research — call onclick on .nav-item directly
+        driver.sleep(0.5)
+        nav_clicked = driver.page.evaluate("""
+            (() => {
+                const items = document.querySelectorAll('.nav-item');
+                for (const li of items) {
+                    if (li.dataset.nav === '2') {
+                        if (li.onclick) li.onclick();
+                        return 'onclick called';
+                    }
+                }
+                return 'not found among ' + items.length;
+            })()
+        """)
+        log(f"Nav: {nav_clicked}")
         driver.sleep(4)
-        log("Research page loaded")
+        ws_title = driver.page.locator(".workspace-title").first.inner_text(timeout=5000)
+        log(f"Page: {ws_title}")
+        
+        # Open Accordion 1 (NotebookLM Data) — it starts closed
+        p1 = driver.page.locator("#research-accordion .service-panel").nth(0)
+        if not p1.evaluate("el => el.classList.contains('open')"):
+            p1.locator(".service-panel-header").evaluate("el => el.click()")
+            driver.sleep(0.5)
+            log("Accordion 1 opened")
         
         passed = 0
         total = 6
