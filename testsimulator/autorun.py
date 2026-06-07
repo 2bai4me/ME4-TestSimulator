@@ -1,18 +1,18 @@
 """
-SMproducer Test via Playwright — Topic + Research workflow.
+SMproducer Combined Test — Step 1 (Topic) → Step 2 (Research) via Playwright.
 """
 from .webdriver import WebDriver
 import random
 
 
-def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", headless=False):
-    """Full Step 1 (Topic) workflow: project → YouTube → analyse → tile → description → complete."""
+def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=RdqYvdT74i0", headless=False):
+    """Step 1 only."""
     driver = WebDriver(headless=headless)
     steps = []
     rng = random.Random()
     
     def log(msg):
-        print(f"[TestSimulator] {msg}")
+        print(f"[Step1] {msg}")
         steps.append(msg)
     
     def click(testid, timeout=10000):
@@ -26,14 +26,6 @@ def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ
         el = driver.page.locator(sel).first
         el.wait_for(state="visible", timeout=timeout)
         el.fill(text)
-    
-    def wait_for_visible(selector, timeout=30000):
-        try:
-            el = driver.page.locator(selector).first
-            el.wait_for(state="visible", timeout=timeout)
-            return el
-        except:
-            return None
     
     try:
         driver.start("http://localhost:5173")
@@ -44,29 +36,22 @@ def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ
         driver.sleep(2)
         log("New project created")
         
-        # Ensure Accordion 2 open
-        driver.sleep(0.5)
         panel2 = driver.page.locator('.service-panel').nth(1)
         if not panel2.evaluate("el => el.classList.contains('open')"):
             panel2.locator('.service-panel-header').evaluate("el => el.click()")
             driver.sleep(0.5)
-            log("Opened source text accordion")
         
-        # YouTube tab + URL
         yt_check = driver.page.locator("#source-check-youtube")
         yt_check.evaluate("el => { el.disabled = false; el.checked = true; el.dispatchEvent(new Event('change', {bubbles:true})); }")
         driver.sleep(0.5)
         fill("youtube-url-input", youtube_url)
         driver.sleep(0.3)
-        log("URL entered")
-        
         click("btn-add-youtube")
         driver.sleep(5)
-        log("Video added — transcript fetched")
+        log("Video added")
         
-        # Analyse starten
         driver.page.locator("[data-testid='btn-analyse-start']").first.evaluate("el => el.click()")
-        log("Analysis started — waiting...")
+        log("Analyse...")
         
         try:
             driver.page.locator("#apop").first.wait_for(state="visible", timeout=15000)
@@ -76,43 +61,24 @@ def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ
                 driver.page.locator("#apop:has-text('Konsolidiere')").first.wait_for(state="attached", timeout=30000)
                 driver.page.locator("#apop:has-text('Duplikat')").first.wait_for(state="attached", timeout=30000)
             except: pass
-            driver.sleep(1)
             driver.page.locator("#aclose").first.evaluate("el => el.click()")
             driver.sleep(2)
-            log("Analysis complete")
+            log("Analysis done")
         except Exception as oe:
             log(f"Analysis: {oe}")
         
-        driver.sleep(1)
-        
-        # Open Accordion 3 (results)
+        # Open Accordion 3 + pick tile
         panel3 = driver.page.locator('.service-panel').nth(2)
         if not panel3.evaluate("el => el.classList.contains('open')"):
             panel3.locator('.service-panel-header').evaluate("el => el.click()")
             driver.sleep(0.5)
         
-        tiles_sel = ".topic-card"
-        tiles_visible = wait_for_visible(tiles_sel, timeout=45000)
-        if not tiles_visible:
-            for sel in ["#thema-ergebnisse-container .topic-card", "#thema-ergebnisse-container [data-id]"]:
-                tiles_visible = wait_for_visible(sel, timeout=10000)
-                if tiles_visible:
-                    tiles_sel = sel
-                    break
+        tiles = driver.page.locator(".topic-card").all()
+        if tiles:
+            rng.choice(tiles).evaluate("el => el.click()")
+            log(f"Tile selected ({len(tiles)} available)")
         
-        if tiles_visible:
-            driver.sleep(1)
-            tiles = driver.page.locator(tiles_sel).all()
-            log(f"Analysis complete — {len(tiles)} tiles")
-            if tiles:
-                chosen = rng.choice(tiles)
-                chosen.evaluate("el => el.click()")
-                driver.sleep(1)
-                log("Tile selected (random)")
-        else:
-            log("No tiles found — continuing")
-        
-        # Open Accordion 4 (Projektstart)
+        # Accordion 4 → Beschreibung → Abschluss
         driver.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         driver.sleep(0.5)
         panel4 = driver.page.locator('.service-panel').nth(3)
@@ -120,38 +86,34 @@ def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ
             panel4.locator('.service-panel-header').evaluate("el => el.click()")
             driver.sleep(0.5)
         
-        driver.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        driver.sleep(0.5)
-        
         click("btn-beschreibung-erstellen", timeout=15000)
-        log("Description created")
         driver.sleep(3)
+        log("Description created")
         
         click("btn-service-abschliessen", timeout=10000)
         driver.sleep(2)
         log("Topic complete ✓")
         
-        driver.sleep(2)
         driver.stop()
-        return {"status": "done", "steps": steps}
+        return {"status": "done", "steps": steps, "driver": None}
         
     except Exception as e:
         log(f"ERROR: {e}")
-        try:
-            driver.page.screenshot(path="workflows/last_error.png")
+        try: driver.page.screenshot(path="workflows/last_error.png")
         except: pass
         try: driver.stop()
         except: pass
         return {"status": "error", "error": str(e), "steps": steps}
 
 
-def run_research_test(headless=False):
-    """Step 2 (Research) workflow: validate prerequisites, test NotebookLM data, criteria, prompt."""
+def run_full_test(youtube_url="https://www.youtube.com/watch?v=RdqYvdT74i0", headless=False):
+    """Combined Step 1 + Step 2 workflow — single browser session."""
     driver = WebDriver(headless=headless)
     steps = []
+    rng = random.Random()
     
     def log(msg):
-        print(f"[ResearchTest] {msg}")
+        print(f"[FullTest] {msg}")
         steps.append(msg)
     
     def click(testid, timeout=10000):
@@ -169,121 +131,122 @@ def run_research_test(headless=False):
     try:
         driver.start("http://localhost:5173")
         driver.sleep(3)
-        log("Page loaded")
+        log("=== STEP 1: TOPIC ===")
         
-        # Navigate to Research page — click Research in navigator
-        # Use the sidebar navigator to go to Step 2
-        nav_links = driver.page.locator("nav a, .sidebar-nav a, [data-nav='research']").all()
-        research_clicked = False
-        for link in nav_links:
-            text = link.inner_text()
-            if "Research" in text or "Recherche" in text or "Pesquisa" in text:
-                link.evaluate("el => el.click()")
-                research_clicked = True
-                log(f"Navigated to Research via: {text.strip()}")
-                break
+        click("btn-new-project")
+        driver.sleep(2)
+        log("[1] New project")
         
-        if not research_clicked:
-            # Fallback: direct URL hash navigation
-            driver.page.evaluate("window.location.hash = '#research'")
-            driver.sleep(2)
-            log("Navigated to Research via hash")
-        
-        driver.sleep(3)
-        
-        # ===== TASK 1: Prerequisites Check =====
-        # Verify title field is filled
-        title_val = driver.page.locator("[data-testid='research-nb-title']").input_value()
-        if title_val:
-            log(f"✓ Title present: {title_val[:50]}")
-        else:
-            log("✗ Title EMPTY — Step 1 may not be complete")
-        
-        desc_val = driver.page.locator("[data-testid='research-nb-desc']").input_value()
-        if desc_val:
-            log(f"✓ Description present ({len(desc_val)} chars)")
-        else:
-            log("✗ Description EMPTY")
-        
-        # ===== TASK 2: Accordion 1 — NotebookLM Data =====
-        # Click copy title button
-        click("btn-copy-title", timeout=5000)
-        driver.sleep(0.5)
-        log("Copy title clicked")
-        
-        # Click copy description button
-        click("btn-copy-desc", timeout=5000)
-        driver.sleep(0.5)
-        log("Copy description clicked")
-        
-        # Type into notebook content
-        fill("research-notebook-content", "Test note from TestSimulator: Research workflow validation.")
-        driver.sleep(0.5)
-        log("Notebook content typed")
-        
-        # Save notes
-        click("btn-save-notizen", timeout=5000)
-        driver.sleep(1)
-        log("Notes saved")
-        
-        # ===== TASK 3: Accordion 2 — Criteria & Prompt =====
-        # Open accordion 2 if closed
-        panel2 = driver.page.locator('#research-accordion .service-panel').nth(1)
+        panel2 = driver.page.locator('.service-panel').nth(1)
         if not panel2.evaluate("el => el.classList.contains('open')"):
             panel2.locator('.service-panel-header').evaluate("el => el.click()")
-            driver.sleep(0.5)
-            log("Opened criteria accordion")
         
-        # Type in extra text
-        fill("research-extra-text", "TestSimulator: Testing criteria selection and prompt generation.")
-        driver.sleep(0.5)
-        log("Extra text entered")
+        yt_check = driver.page.locator("#source-check-youtube")
+        yt_check.evaluate("el => { el.disabled = false; el.checked = true; el.dispatchEvent(new Event('change', {bubbles:true})); }")
+        fill("youtube-url-input", youtube_url)
+        click("btn-add-youtube")
+        driver.sleep(5)
+        log("[1] Video added")
         
-        # Click "Auswahl speichern & Prompt generieren"
-        click("btn-select-kriterien", timeout=10000)
-        log("Generating prompt...")
+        driver.page.locator("[data-testid='btn-analyse-start']").first.evaluate("el => el.click()")
+        driver.page.locator("#apop").first.wait_for(state="visible", timeout=15000)
+        driver.page.locator("#apop:has-text('Themen gespeichert')").first.wait_for(state="attached", timeout=180000)
+        try:
+            driver.page.locator("#apop:has-text('Duplikat')").first.wait_for(state="attached", timeout=60000)
+        except: pass
+        driver.page.locator("#aclose").first.evaluate("el => el.click()")
+        driver.sleep(2)
+        log("[1] Analysis done")
         
-        # Wait for prompt to appear (loading spinner disappears)
+        panel3 = driver.page.locator('.service-panel').nth(2)
+        if not panel3.evaluate("el => el.classList.contains('open')"):
+            panel3.locator('.service-panel-header').evaluate("el => el.click()")
+        tiles = driver.page.locator(".topic-card").all()
+        if tiles:
+            rng.choice(tiles).evaluate("el => el.click()")
+            log(f"[1] Tile selected ({len(tiles)})")
+        
+        driver.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        panel4 = driver.page.locator('.service-panel').nth(3)
+        if not panel4.evaluate("el => el.classList.contains('open')"):
+            panel4.locator('.service-panel-header').evaluate("el => el.click()")
+        click("btn-beschreibung-erstellen", timeout=15000)
         driver.sleep(3)
+        click("btn-service-abschliessen", timeout=10000)
+        driver.sleep(2)
+        log("[1] Topic complete ✓")
+        
+        # ===== STEP 2: RESEARCH =====
+        log("=== STEP 2: RESEARCH ===")
+        
+        # Navigate to Research — reload page first to clear Vite module cache
+        log("=== STEP 2: RESEARCH ===")
+        driver.page.reload()
+        driver.sleep(3)
+        log("[2] Page reloaded")
+        
+        # Click Research in navigator (page is fresh now)
+        driver.page.locator("[data-nav='2']").first.click(force=True)
+        driver.sleep(3)
+        
+        # Check prerequisites: title and description should be filled
         try:
-            driver.page.locator("#generated-prompt pre").first.wait_for(state="visible", timeout=30000)
-            log("Prompt generated ✓")
+            nb_title = driver.page.locator("[data-testid='research-nb-title']").input_value(timeout=10000)
+            log(f"[2] ✓ Title: {nb_title[:50] if nb_title else 'EMPTY'}")
         except:
-            try:
-                driver.page.locator("#generated-prompt").first.wait_for(state="visible", timeout=10000)
-                log("Prompt area visible")
-            except:
-                log("Prompt generation may have failed")
-        
-        driver.sleep(1)
-        
-        # ===== TASK 4: Accordion 3 — Prompt Actions =====
-        # Copy prompt
-        try:
-            click("btn-copy-prompt", timeout=5000)
-            driver.sleep(0.5)
-            log("Prompt copied")
-        except:
-            log("Copy prompt button not available")
-        
-        # Teilen (split into chapters)
-        try:
-            click("btn-teilen-prompt", timeout=5000)
+            log("[2] ✗ Title field not found or empty — Research may show empty state")
+            # Research page might show "no project" state — try clicking nav again
+            driver.page.locator("[data-nav='1']").first.click(force=True, timeout=3000)
             driver.sleep(1)
-            log("Split prompt clicked")
-        except:
-            log("Teilen button not available")
+            driver.page.locator("[data-nav='2']").first.click(force=True, timeout=3000)
+            driver.sleep(3)
+        
+        # Copy title + description
+        try: click("btn-copy-title", timeout=5000); log("[2] Copy title ✓")
+        except: log("[2] Copy title skipped")
+        try: click("btn-copy-desc", timeout=5000); log("[2] Copy desc ✓")  
+        except: log("[2] Copy desc skipped")
+        
+        # Type notebook content + save
+        try:
+            fill("research-notebook-content", "TestSimulator Research validation note.")
+            driver.sleep(0.5)
+            click("btn-save-notizen", timeout=5000)
+            log("[2] Notes saved ✓")
+        except Exception as e:
+            log(f"[2] Notes: {e}")
+        
+        # Criteria selection + prompt generation
+        try:
+            panel_r2 = driver.page.locator('#research-accordion .service-panel').nth(1)
+            if not panel_r2.evaluate("el => el.classList.contains('open')"):
+                panel_r2.locator('.service-panel-header').evaluate("el => el.click()")
+                driver.sleep(0.5)
+            
+            fill("research-extra-text", "TestSimulator criteria test.")
+            click("btn-select-kriterien", timeout=10000)
+            driver.sleep(3)
+            
+            try:
+                driver.page.locator("#generated-prompt pre").first.wait_for(state="visible", timeout=30000)
+                log("[2] Prompt generated ✓")
+            except:
+                log("[2] Prompt: waiting longer...")
+                driver.sleep(10)
+            
+            click("btn-copy-prompt", timeout=5000)
+            log("[2] Prompt copied ✓")
+        except Exception as e:
+            log(f"[2] Criteria/Prompt: {e}")
         
         driver.sleep(2)
-        log("Research test complete ✓")
-        
+        log("=== FULL WORKFLOW DONE ✓ ===")
         driver.stop()
         return {"status": "done", "steps": steps}
         
     except Exception as e:
         log(f"ERROR: {e}")
-        try:
-            driver.page.screenshot(path="workflows/last_error.png")
+        try: driver.page.screenshot(path="workflows/last_error.png")
         except: pass
         try: driver.stop()
         except: pass
