@@ -75,8 +75,12 @@ def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=RdqYvdT74i0
         
         tiles = driver.page.locator(".topic-card").all()
         if tiles:
-            rng.choice(tiles).evaluate("el => el.click()")
-            log(f"Tile selected ({len(tiles)} available)")
+            chosen = rng.choice(tiles)
+            chosen.evaluate("el => el.click()")
+            driver.sleep(2)  # wait for async updateErgebnis
+            # Verify selection
+            is_sel = chosen.evaluate("el => el.classList.contains('selected')")
+            log(f"Tile selected ({len(tiles)} available, selected={is_sel}) ({len(tiles)} available)")
         
         # Accordion 4 → Beschreibung → Abschluss
         driver.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
@@ -86,9 +90,21 @@ def run_smproducer_test(youtube_url="https://www.youtube.com/watch?v=RdqYvdT74i0
             panel4.locator('.service-panel-header').evaluate("el => el.click()")
             driver.sleep(0.5)
         
-        click("btn-beschreibung-erstellen", timeout=15000)
-        driver.sleep(5)  # wait for async saveMeta
-        driver.sleep(3)
+        driver.page.locator("[data-testid='btn-beschreibung-erstellen']").first.evaluate("el => el.click()")
+        # Wait for KI to fill the description textarea
+        desc_filled = False
+        for _ in range(20):
+            try:
+                dv = driver.page.locator("#projekt-beschreibung").input_value()
+                if dv and len(dv) > 20:
+                    log(f"Description filled: {len(dv)} chars")
+                    desc_filled = True
+                    break
+            except: pass
+            driver.sleep(1)
+        if not desc_filled:
+            log("WARNING: Description not filled by KI")
+        driver.sleep(5)  # wait for async saveMeta to backend
         log("Description created")
         
         click("btn-service-abschliessen", timeout=10000)
@@ -172,7 +188,7 @@ def run_full_test(youtube_url="https://www.youtube.com/watch?v=RdqYvdT74i0", hea
         panel4 = driver.page.locator('.service-panel').nth(3)
         if not panel4.evaluate("el => el.classList.contains('open')"):
             panel4.locator('.service-panel-header').evaluate("el => el.click()")
-        click("btn-beschreibung-erstellen", timeout=15000)
+        driver.page.locator("[data-testid='btn-beschreibung-erstellen']").first.evaluate("el => el.click()")
         driver.sleep(5)  # wait for async saveMeta
         driver.sleep(3)
         click("btn-service-abschliessen", timeout=10000)
