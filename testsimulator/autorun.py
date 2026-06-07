@@ -376,6 +376,14 @@ def run_research_test(headless=False):
         except Exception as e:
             log(f"[✗] Notes: {e}")
         
+        # Step 2.1: Create notebook via dedicated button
+        try:
+            click("btn-create-notebook", timeout=5000)
+            driver.sleep(4)
+            log("[✓] Notebook created")
+        except Exception as e:
+            log(f"[!] Notebook: {e}")
+        
         try:
             p2 = driver.page.locator("#research-accordion .service-panel").nth(1)
             if not p2.evaluate("el => el.classList.contains('open')"):
