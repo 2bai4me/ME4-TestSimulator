@@ -395,7 +395,7 @@ def run_research_test(headless=False):
             driver.page.locator("#dr-popup-log").first.wait_for(state="visible", timeout=10000)
             log("[\u2192] Overlay visible")
             try:
-                driver.page.locator("#dr-popup-log:has-text('abgeschlossen')").first.wait_for(state="attached", timeout=300000)
+                driver.page.locator("#dr-popup-log:has-text('abgeschlossen')").first.wait_for(state="attached", timeout=60000)
                 log("[\u2713] DeepResearch completed")
             except:
                 try:
