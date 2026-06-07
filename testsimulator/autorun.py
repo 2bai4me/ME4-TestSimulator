@@ -361,6 +361,15 @@ def run_research_test(headless=False):
             if not p2.evaluate("el => el.classList.contains('open')"):
                 p2.locator(".service-panel-header").evaluate("el => el.click()")
                 driver.sleep(0.5)
+            # Step 2.2: Toggle criteria checkboxes (simulate manual input)
+            checkboxes = driver.page.locator(".krit-checkbox").all()
+            if checkboxes:
+                for i, cb in enumerate(checkboxes):
+                    if i < 2:
+                        cb.evaluate("el => { el.checked = false; el.dispatchEvent(new Event('change',{bubbles:true})); }")
+                    elif i % 3 == 0:
+                        cb.evaluate("el => { el.checked = true; el.dispatchEvent(new Event('change',{bubbles:true})); }")
+                log(f"[\u2713] Criteria toggled ({len(checkboxes)} checkboxes)")
             fill("research-extra-text", "TestSimulator criteria test.")
             click("btn-select-kriterien", timeout=10000)
             driver.sleep(3)
@@ -376,6 +385,31 @@ def run_research_test(headless=False):
         except:
             log("[✗] Copy prompt")
         
+        
+        # === TEST 5: DeepResearch (Step 2.1 + notebookLM) ===
+        try:
+            driver.page.evaluate("window.scrollTo(0, 0)")
+            driver.sleep(0.5)
+            click("btn-deep-research", timeout=5000)
+            log("[\u2192] DeepResearch started")
+            driver.page.locator("#dr-popup-log").first.wait_for(state="visible", timeout=10000)
+            log("[\u2192] Overlay visible")
+            try:
+                driver.page.locator("#dr-popup-log:has-text('abgeschlossen')").first.wait_for(state="attached", timeout=300000)
+                log("[\u2713] DeepResearch completed")
+            except:
+                try:
+                    txt = driver.page.locator("#dr-popup-log").inner_text(timeout=3000)
+                    if "nicht erreichbar" in txt:
+                        log("[!] notebookLM-Service (8765) DOWN")
+                    else:
+                        log(f"[!] Result: {txt[:120]}")
+                except:
+                    log("[!] No result after 5 min")
+            driver.page.locator("button:has-text('OK')").first.evaluate("el => el.click()")
+            driver.sleep(1)
+        except Exception as e:
+            log(f"[!] DeepResearch: {str(e)[:100]}")
         log(f"=== RESEARCH: {passed}/{total} passed ===")
         driver.stop()
         return {"status": "done" if passed >= total else "partial", "passed": passed, "total": total, "steps": steps}
